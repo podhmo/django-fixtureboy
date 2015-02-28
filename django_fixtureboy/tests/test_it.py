@@ -18,9 +18,21 @@ class Tests(CleanHookTestCase):
             active = models.BooleanField(choices=ONOFF)
             gender = models.CharField(max_length=1, choices=["f", "m"])
 
+        class Permission(models.Model):
+            name = models.CharField(max_length=255, null=False, default="")
+
+        class Skill(models.Model):
+            name = models.CharField(max_length=255, null=False, default="")
+
         class Member(models.Model):
             group = models.ForeignKey(Group)
+            permission_set = models.ManyToManyField(Permission)
+            skill_set = models.ManyToManyField(Skill, through="MemberToSkill")
             name = models.CharField(max_length=255, null=False, default="")
+
+        class MemberToSkill(models.Model):
+            member = models.ForeignKey(Member)
+            skill = models.ForeignKey(Skill)
 
         cls.Group = Group
         cls.Member = Member
@@ -32,6 +44,7 @@ class Tests(CleanHookTestCase):
         from django_fixtureboy import DefaultContract
         DefaultContract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_subfactory_hook")
         DefaultContract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_modelutils_choices_hook")
+        DefaultContract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_many_to_many_post_generation_hook")
         DefaultContract.finish.add_hook("django_fixtureboy.hooks:finish_add_autopep8_hook")
         emitter = self._makeOne(self._get_models(), DefaultContract)
         result = emitter.emit()

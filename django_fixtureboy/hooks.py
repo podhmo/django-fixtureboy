@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from factory import SubFactory
+from factory import SubFactory, post_generation
 from django.db.models.fields import NOT_PROVIDED
 
 
@@ -13,6 +13,30 @@ def attrs_add_subfactory_hook(contract, gen, model):
         if brain.is_foreinkey(f):
             relmodel = f.rel.to.__name__
             attrs.append("{name} = SubFactory({model})".format(name=f.name, model=relmodel))
+    return attrs
+
+
+def attrs_add_many_to_many_post_generation_hook(contract, gen, model):
+    attrs = gen()
+    if not model._meta.local_many_to_many:
+        return attrs
+
+    for f in model._meta.local_many_to_many:
+        if f.rel.through:
+            continue
+        else:
+            contract.initial_parts.lib.add(contract.build_import_sentence(post_generation))
+
+            def generate_code_with_srcgen(m, f=f):
+                m.stmt("@post_generation")
+                with m.def_(f.name, "create", "extracted", "**kwargs"):
+                    with m.if_("not create"):
+                        m.return_("")
+
+                    with m.if_("extracted"):
+                        with m.for_("x", "extracted"):
+                            m.stmt("self.{}.add(x)".format(f.name))
+            attrs.append(generate_code_with_srcgen)
     return attrs
 
 

@@ -100,7 +100,10 @@ class FactoryEmitter(object):
                 continue
             with m.class_(parts.name, bases=parts.bases):
                 for attr in parts.attrs:
-                    m.stmt(attr)
+                    if callable(attr):
+                        attr(m)
+                    else:
+                        m.stmt(attr)
 
                 m.sep()
 
