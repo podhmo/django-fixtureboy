@@ -38,7 +38,7 @@ def attrs_add_modelutils_choices_hook(contract, gen, model):
                       "value": value,
                       "label": label}
             if value == attrname:
-                attrs.append("{name} = {value}  # {label}".format(**kwargs))
+                attrs.append("{name} = {value!r}  # {label}".format(**kwargs))
             else:
                 attrs.append("{name} = {model}.{choice}.{attrname}  # {label}".format(**kwargs))
     return attrs
