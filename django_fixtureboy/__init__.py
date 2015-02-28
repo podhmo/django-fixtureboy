@@ -99,5 +99,7 @@ class FactoryEmitter(object):
                 for attr in parts.attrs:
                     m.stmt(attr)
 
+                m.sep()
+
                 self.contract.gen_meta(m, parts)
         return str(m)
