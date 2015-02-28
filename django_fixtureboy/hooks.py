@@ -20,23 +20,19 @@ def attrs_add_many_to_many_post_generation_hook(contract, gen, model):
     attrs = gen()
     if not model._meta.local_many_to_many:
         return attrs
+    contract.initial_parts.lib.add(contract.build_import_sentence(post_generation))
 
     for f in model._meta.local_many_to_many:
-        if f.rel.through:
-            continue
-        else:
-            contract.initial_parts.lib.add(contract.build_import_sentence(post_generation))
+        def generate_code_with_srcgen(m, f=f):
+            m.stmt("@post_generation")
+            with m.def_(f.name, "create", "extracted", "**kwargs"):
+                with m.if_("not create"):
+                    m.return_("")
 
-            def generate_code_with_srcgen(m, f=f):
-                m.stmt("@post_generation")
-                with m.def_(f.name, "create", "extracted", "**kwargs"):
-                    with m.if_("not create"):
-                        m.return_("")
-
-                    with m.if_("extracted"):
-                        with m.for_("x", "extracted"):
-                            m.stmt("self.{}.add(x)".format(f.name))
-            attrs.append(generate_code_with_srcgen)
+                with m.if_("extracted"):
+                    with m.for_("x", "extracted"):
+                        m.stmt("self.{}.add(x)".format(f.name))
+        attrs.append(generate_code_with_srcgen)
     return attrs
 
 
