@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 from factory import SubFactory
-from model_utils import Choices
 from django.db.models.fields import NOT_PROVIDED
 
 
@@ -33,8 +32,10 @@ def attrs_add_modelutils_choices_hook(contract, gen, model):
     color = models.IntegerField(choices=COLOR)
 
     # then
-    color = Model.Color.red
+    color = Model.Color.red  # red
     """
+    from model_utils import Choices
+
     attrs = gen()
     for f in model._meta.local_fields:
         if f.choices:
@@ -58,3 +59,9 @@ def attrs_add_modelutils_choices_hook(contract, gen, model):
                     value = f.default
                 attrs.append("{name} = {value!r}".format(name=f.name, value=value))
     return attrs
+
+
+def finish_add_autopep8_hook(contract, gen, m):
+    from autopep8 import fix_code
+    code = gen()
+    return fix_code(code, encoding="utf-8")

@@ -63,6 +63,9 @@ class DefaultContract(HasHookPointMeta("_BaseHookPoint", (), {})):
         with m.class_("Meta"):
             m.stmt("model = {}".format(parts.model))
 
+    @withhook
+    def finish(self, m):
+        return str(m)
 
 CodeParts = namedtuple("CodeParts", "lib name model bases attrs")  # xxx
 
@@ -103,4 +106,4 @@ class FactoryEmitter(object):
 
                 self.contract.gen_meta(m, parts)
                 m.sep()
-        return str(m)
+        return self.contract.finish(m)

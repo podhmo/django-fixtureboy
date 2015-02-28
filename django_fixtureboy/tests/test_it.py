@@ -32,6 +32,7 @@ class Tests(CleanHookTestCase):
         from django_fixtureboy import DefaultContract
         DefaultContract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_subfactory_hook")
         DefaultContract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_modelutils_choices_hook")
+        DefaultContract.finish.add_hook("django_fixtureboy.hooks:finish_add_autopep8_hook")
         emitter = self._makeOne(self._get_models(), DefaultContract)
         result = emitter.emit()
         print(result)

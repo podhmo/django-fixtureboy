@@ -18,10 +18,13 @@ except IOError:
 install_requires = [
     'django-mindscape',
     'factory_boy',
-    'django-model-utils',
-    'srcgen'
+    'srcgen',
 ]
 
+full_extras = [
+    'django-model-utils',
+    'autopep8'
+]
 
 docs_extras = [
 ]
@@ -30,6 +33,8 @@ tests_require = [
 ]
 
 testing_extras = tests_require + [
+    'django-model-utils',
+    'autopep8'
 ]
 
 setup(name='django-fixtureboy',
@@ -51,9 +56,9 @@ setup(name='django-fixtureboy',
       extras_require={
           'testing': testing_extras,
           'docs': docs_extras,
+          'full': full_extras
       },
       tests_require=tests_require,
       test_suite="django_fixtureboy.tests",
       entry_points="""
 """)
-
