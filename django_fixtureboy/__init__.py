@@ -67,6 +67,16 @@ class DefaultContract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def finish(self, m):
         return str(m)
 
+    # for ValueDeserializer
+    def alias_from_field(self, f):
+        return f.__class__.__name__.replace("Field", "").lower()
+
+    def keyname_from_field(self, f):
+        return f.__class__.__name__
+
+    def deserializer_name(self):
+        return "DD"
+
 CodeParts = namedtuple("CodeParts", "lib name model bases attrs")  # xxx
 
 
