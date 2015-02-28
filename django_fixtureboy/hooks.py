@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from factory import SubFactory
 from model_utils import Choices
+from django.db.models.fields import NOT_PROVIDED
 
 
 def attrs_add_subfactory_hook(contract, gen, model):
@@ -16,6 +17,15 @@ def attrs_add_subfactory_hook(contract, gen, model):
     return attrs
 
 
+def _detect_choice_name(model, field, choices):
+    choice_name = getattr(model, field.name, None)
+    if choice_name is not None:
+        return choice_name
+    for k, v in model.__dict__.items():
+        if v == choices:
+            return k
+
+
 def attrs_add_modelutils_choices_hook(contract, gen, model):
     """
     # in model
@@ -27,18 +37,24 @@ def attrs_add_modelutils_choices_hook(contract, gen, model):
     """
     attrs = gen()
     for f in model._meta.local_fields:
-        choice_name = f.name.upper()
-        choices = getattr(model, choice_name, None)
-        if choices is not None:
-            value, attrname, label = choices._triples[0]
-            kwargs = {"name": f.name,
-                      "model": model.__name__,
-                      "choice": choice_name,
-                      "attrname": attrname,
-                      "value": value,
-                      "label": label}
-            if value == attrname:
-                attrs.append("{name} = {value!r}  # {label}".format(**kwargs))
-            else:
-                attrs.append("{name} = {model}.{choice}.{attrname}  # {label}".format(**kwargs))
+        if f.choices:
+            if isinstance(f.choices, Choices):
+                choice_name = _detect_choice_name(model, f, f.choices)
+                value, attrname, label = f.choices._triples[0]
+                kwargs = {"name": f.name,
+                          "model": model.__name__,
+                          "choice": choice_name,
+                          "attrname": attrname,
+                          "value": value,
+                          "label": label}
+                if value == attrname:
+                    attrs.append("{name} = {value!r}  # {label}".format(**kwargs))
+                else:
+                    attrs.append("{name} = {model}.{choice}.{attrname}  # {label}".format(**kwargs))
+            elif isinstance(f.choices, (list, tuple)):
+                if f.default is NOT_PROVIDED:
+                    value = f.choices[0]
+                else:
+                    value = f.default
+                attrs.append("{name} = {value!r}".format(name=f.name, value=value))
     return attrs

@@ -102,4 +102,5 @@ class FactoryEmitter(object):
                 m.sep()
 
                 self.contract.gen_meta(m, parts)
+                m.sep()
         return str(m)

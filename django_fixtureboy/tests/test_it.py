@@ -12,10 +12,11 @@ class Tests(CleanHookTestCase):
 
         class Group(models.Model):
             name = models.CharField(max_length=255, null=False, default="")
-            COLOR = Choices((0, "r", "red"), (2, "g", "green"), (3, "b", "blue"))
-            color = models.IntegerField(choices=COLOR)
-            ACTIVE = Choices((True, "on"), (False, "off"))
-            active = models.BooleanField(choices=ACTIVE)
+            COLOR_LIST = Choices((0, "r", "red"), (2, "g", "green"), (3, "b", "blue"))
+            color = models.IntegerField(choices=COLOR_LIST)
+            ONOFF = Choices((True, "on"), (False, "off"))
+            active = models.BooleanField(choices=ONOFF)
+            gender = models.CharField(max_length=1, choices=["f", "m"])
 
         class Member(models.Model):
             group = models.ForeignKey(Group)
