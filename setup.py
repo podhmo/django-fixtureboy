@@ -16,7 +16,10 @@ except IOError:
 
 
 install_requires = [
-    'setuptools',
+    'django-mindscape',
+    'factory_boy',
+    'django-model-utils',
+    'srcgen'
 ]
 
 
