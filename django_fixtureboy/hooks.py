@@ -23,6 +23,7 @@ def _detect_choice_name(model, field, choices):
     for k, v in model.__dict__.items():
         if v == choices:
             return k
+    return None
 
 
 def attrs_add_modelutils_choices_hook(contract, gen, model):
@@ -41,18 +42,21 @@ def attrs_add_modelutils_choices_hook(contract, gen, model):
         if f.choices:
             if isinstance(f.choices, Choices):
                 choice_name = _detect_choice_name(model, f, f.choices)
-                value, attrname, label = f.choices._triples[0]
-                kwargs = {"name": f.name,
-                          "model": model.__name__,
-                          "choice": choice_name,
-                          "attrname": attrname,
-                          "value": value,
-                          "label": label}
-                if value == attrname:
-                    attrs.append("{name} = {value!r}  # {label}".format(**kwargs))
-                else:
-                    attrs.append("{name} = {model}.{choice}.{attrname}  # {label}".format(**kwargs))
-            elif isinstance(f.choices, (list, tuple)):
+                if choice_name is not None:
+                    value, attrname, label = f.choices._triples[0]
+                    kwargs = {"name": f.name,
+                              "model": model.__name__,
+                              "choice": choice_name,
+                              "attrname": attrname,
+                              "value": value,
+                              "label": label}
+                    if value == attrname:
+                        attrs.append("{name} = {value!r}  # {label}".format(**kwargs))
+                    else:
+                        attrs.append("{name} = {model}.{choice}.{attrname}  # {label}".format(**kwargs))
+                    continue
+
+            if isinstance(f.choices, (list, tuple)):
                 if f.default is NOT_PROVIDED:
                     value = f.choices[0]
                 else:
