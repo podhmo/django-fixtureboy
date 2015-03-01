@@ -70,6 +70,7 @@ class _ChoicesInfoDetector(object):
 
 
 def args_add_modelutils_choices_hook(contract, gen, model, field, value):
+    value = gen()
     choicename = _ChoicesInfoDetector.choice_name(model, field)
     if choicename is None:
         return value
@@ -126,3 +127,14 @@ def finish_add_autopep8_hook(contract, gen, m):
 def setup_add_jsonfield_hook(contract, gen, emitter):
     from jsonfield import JSONField
     emitter.alias_map[JSONField.__name__] = eager(partial(JSONField.to_python, None))
+
+
+class BuildDataOmmitingHook(object):
+    def __init__(self, *keys):
+        self.keys = keys
+
+    def __call__(self, contract, gen, model, data):
+        data = gen()
+        for k in self.keys:
+            data.pop(k, None)
+        return data

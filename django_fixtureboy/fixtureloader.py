@@ -31,7 +31,9 @@ class ObjectListToDictIterator(object):
         for obj in self.objlist:
             Model = self.current_model = obj.__class__
             self.contract.on_model_detected(Model)
-            yield (Model, self.serializer.serialize(obj))
+            data = self.serializer.serialize(obj)
+            self.contract.on_build_data(Model, data)
+            yield (Model, data)
 
 
 class XMLToDictIterator(object):
@@ -69,6 +71,7 @@ class XMLToDictIterator(object):
             else:
                 value = getInnerText(field_node).strip()
             data[field_name] = value
+        self.contract.on_build_data(Model, data)
         return Model, data
 
     def _get_model_from_node(self, node, attr):

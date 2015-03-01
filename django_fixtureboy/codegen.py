@@ -59,6 +59,13 @@ class CodeGenerator(object):
 
     def generate(self, m=None):
         m = m or PythonModule()
+        for import_sentence in self.contract.initial_parts.lib:
+            m.stmt(import_sentence)
+
+        self.value_emitter.emit_class(m)
+
+        m.sep()
+
         for model, data in self.iterator:
             pk = self._get_primary_key(model, data)
             varname = self.variable_manager.generate_variable(model, pk)
@@ -121,10 +128,14 @@ class ValueDeserializerEmitter(object):
         m.sep()
 
         with m.class_(self.classname()):
+            has_attribute = False
             for name in self.fields.keys():
                 alias = self.alias_map[name]
                 if not isinstance(alias, eager):
+                    has_attribute = True
                     m.stmt("{alias} = staticmethod({clsname}().to_python)".format(alias=alias, clsname=name))
+            if not has_attribute:
+                m.stmt("pass")
         return m
 
     def convert_value(self, model, fieldname, value):

@@ -62,7 +62,11 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     # for fixture loader
     @withhook
     def on_model_detected(self, model):
-        pass
+        self.initial_parts.lib.add(self.build_import_sentence(model))
+
+    @withhook
+    def on_build_data(self, model, data):
+        return data
 
     def get_model(self, model_identifier):
         from django.apps import apps
