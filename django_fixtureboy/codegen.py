@@ -7,6 +7,17 @@ from srcgen.python import PythonModule
 eager = namedtuple("eager", "fn")
 
 
+class ReprWrapper(object):
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return str(self.value)
+
+    def __str__(self):
+        return str(self.value)
+
+
 class VariableManager(object):
     def __init__(self, contract):
         self.contract = contract
@@ -124,4 +135,4 @@ class ValueDeserializerEmitter(object):
         if isinstance(alias, eager):
             return "{}".format(alias.fn(value))
         else:
-            return "{}.{}({!r})".format(self.classname(), alias, value)
+            return ReprWrapper("{}.{}({!r})".format(self.classname(), alias, value))

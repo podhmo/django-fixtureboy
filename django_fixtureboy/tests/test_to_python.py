@@ -44,7 +44,7 @@ class Tests(CleanHookTestCase):
         models = [self.Item]
         emitter = self._makeOne(models)
 
-        code = emitter.convert_value(self.Item, "pull_date", "2014-10-30T14:49:57.460464")
+        code = str(emitter.convert_value(self.Item, "pull_date", "2014-10-30T14:49:57.460464"))
         self.assertRegex(code, "{}.datetime\('2014-.+64'\)".format(emitter.classname()))
 
     def test_it_use_method__integer(self):
@@ -58,7 +58,7 @@ class Tests(CleanHookTestCase):
         models = [self.Item]
         emitter = self._makeOne(models)
 
-        code = emitter.convert_value(self.Item, "memo", '{"description": "healing?"}')
+        code = str(emitter.convert_value(self.Item, "memo", '{"description": "healing?"}'))
         self.assertRegex(code, "{}.json(.+)".format(emitter.classname()))
 
     def test_it_use_method__json__with_hook(self):
