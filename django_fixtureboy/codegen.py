@@ -53,7 +53,7 @@ class CodeGenerator(object):
             varname = self.variable_manager.generate_variable(model, pk)
             args = self._get_creation_args(model, data)
             self.contract.create_model(m, model, varname, args)
-        return m
+        return self.contract.finish(m)
 
 
 class OrderedIterator(object):
