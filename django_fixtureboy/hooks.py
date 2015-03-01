@@ -84,6 +84,8 @@ def args_add_modelutils_choices_hook(contract, gen, model, field, value):
     if not isinstance(field.choices, Choices):
         return value
     attrname = _ChoicesInfoDetector.choice_attr(model, field, value)
+    if attrname == str(value):
+        return value
     return ReprWrapper("{}.{}.{}".format(model.__name__, choicename, attrname))
 
 

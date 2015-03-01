@@ -34,4 +34,5 @@ class FactoryGenerator(object):
 
                 self.contract.gen_meta(m, parts)
                 m.sep()
+                m.sep()
         return self.contract.finish(m)
