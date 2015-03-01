@@ -63,4 +63,44 @@ class Tests(CleanHookTestCase):
         Contract.finish.add_hook("django_fixtureboy.hooks:finish_add_autopep8_hook")
         emitter = self._makeOne(self._get_models(), Contract)
         result = emitter.emit()
-        print(result)
+        # TODO: tidy test
+        expected = """
+from factory.django import DjangoModelFactory
+from factory.declarations import SubFactory
+from factory.helpers import post_generation
+from django_fixtureboy.tests.test_it_gen_factory import Member
+from django_fixtureboy.tests.test_it_gen_factory import Group
+
+
+class MemberFactory(DjangoModelFactory):
+    group = SubFactory(Group)
+
+    @post_generation
+    def permission_set(create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            for x in extracted:
+                self.permission_set.add(x)
+
+    @post_generation
+    def skill_set(create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            for x in extracted:
+                self.skill_set.add(x)
+
+    class Meta(object):
+        model = Member
+
+
+class GroupFactory(DjangoModelFactory):
+    color = Group.COLOR_LIST.r  # red
+    active = True  # on
+    gender = 'f'
+
+    class Meta(object):
+        model = Group
+"""
+        self.assertEqual(result.strip(), expected.strip())

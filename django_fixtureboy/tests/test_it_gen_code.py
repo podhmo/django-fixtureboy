@@ -40,8 +40,6 @@ class Tests(unittest.TestCase):
         create_table(Permission)
 
     def test_it(self):
-        import django
-        django.setup()
         g = self.Group(id=1, name="G", color=self.Group.COLOR_LIST.r)
         g.save()
         m0 = self.Member(name="HP", group=g)
@@ -51,9 +49,17 @@ class Tests(unittest.TestCase):
 
         from django_fixtureboy import Contract
         from django_fixtureboy.fixtureloader import ObjectListToDictIterator
-        from django_fixtureboy.codegen import CodeGenerator
+        from django_fixtureboy.codegen import CodeGenerator, OrderedIterator
         from django_mindscape import Walker, ModelMapProvider
         provider = ModelMapProvider(Walker([self.Member]))
-        iterator = ObjectListToDictIterator([m0, m1, g], Contract(provider.ordered_models))
-
-
+        contract = Contract(provider.ordered_models)
+        iterator = ObjectListToDictIterator([m0, m1, g], contract)
+        codegen = CodeGenerator(OrderedIterator(iterator, provider), contract)
+        result = (str(codegen.generate()))
+        # TODO: tidy test
+        expected = """
+group0 = GroupFactory(id='1', name='G', color='0')
+member0 = MemberFactory(id='1', group=group0, name='HP')
+member1 = MemberFactory(id='2', group=group0, name='RW')
+"""
+        self.assertEqual(expected.strip(), result.strip())

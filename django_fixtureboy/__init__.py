@@ -7,14 +7,14 @@ from functools import partial
 from .hookpoint import withhook, HasHookPointMeta
 from .hookpoint import clearall_hooks
 from .codegen import eager
-
+from .structure import OrderedSet
 
 class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def __init__(self, models, base_factory=DjangoModelFactory):
         self.models = models
         self.base_factory = base_factory
         self.initial_parts = CodeParts(
-            lib=set([self.build_import_sentence(base_factory)]),
+            lib=OrderedSet([self.build_import_sentence(base_factory)]),
             name=None,
             model=None,
             bases=None,
@@ -90,6 +90,16 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
 
     def deserializer_name(self):
         return "DD"
+
+    # variable manager
+    def varname(self, model, i):
+        return "{}{}".format(model.__name__.lower(), i)
+
+    def create_model(self, m, model, varname, args):
+        # TODO: add import sentence
+        factory_name = self.name(model)
+        m.stmt("{} = {}({})".format(varname, factory_name, ", ".join(args)))
+        return m
 
 CodeParts = namedtuple("CodeParts", "lib name model bases attrs")  # xxx
 

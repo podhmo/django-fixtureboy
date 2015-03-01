@@ -31,5 +31,5 @@ class Tests(unittest.TestCase):
         item = self.Item(category_id=1, name="portion", price=200, pull_date=datetime(2000, 1, 1))
         target = self._makeOne()
         result = target.serialize(item)
-        expected = {'category': '1', 'price': '200', 'name': 'portion', 'pull_date': '2000-01-01T00:00:00'}
+        expected = {'id': 'None', 'category': '1', 'price': '200', 'name': 'portion', 'pull_date': '2000-01-01T00:00:00'}
         self.assertEqual(result, expected)

@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from io import StringIO
 from xml.dom import pulldom
+from collections import OrderedDict
 from django.core.serializers.xml_serializer import (
     DefusedExpatParser,
     getInnerText
@@ -10,14 +11,14 @@ from django.core.serializers.xml_serializer import (
 class ObjectSerializer(object):
     def serialize(self, obj):
         model = obj._meta.concrete_model
-        D = {}
+        data = OrderedDict()
         for field in model._meta.local_fields:
-            if field.serialize:
-                if field.rel is None:
-                    D[field.name] = field.value_to_string(obj)
-                else:
-                    D[field.name] = field.value_to_string(obj)  # xxx
-        return D
+            # if field.serialize:  # xxx: cannot catch a primary key.
+            if field.rel is None:
+                data[field.name] = field.value_to_string(obj)
+            else:
+                data[field.name] = field.value_to_string(obj)  # xxx
+        return data
 
 
 class ObjectListToDictIterator(object):
@@ -54,7 +55,7 @@ class XMLToDictIterator(object):
     def handle_object(self, node):
         Model = self._get_model_from_node(node, "model")
         self.contract.on_model_detected(Model)
-        data = {}
+        data = OrderedDict()
         if node.hasAttribute('pk'):
             data[Model._meta.pk.attname] = node.getAttribute('pk')
 

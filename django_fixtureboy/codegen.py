@@ -1,10 +1,27 @@
 # -*- coding:utf-8 -*-
 import logging
 logger = logging.getLogger(__name__)
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 from srcgen.python import PythonModule
 
 eager = namedtuple("eager", "fn")
+
+
+class VariableManager(object):
+    def __init__(self, contract):
+        self.contract = contract
+        self.counters = Counter()  # model -> int
+        self.variables = defaultdict(dict)  # model -> primary key -> varname
+
+    def generate_variable(self, model, pk):
+        i = self.counters[model]
+        self.counters[model] += 1
+        varname = self.contract.varname(model, i)
+        self.variables[model][pk] = varname
+        return varname
+
+    def get_variable(self, model, pk):
+        return self.variables[model].get(pk)
 
 
 class CodeGenerator(object):
@@ -13,9 +30,44 @@ class CodeGenerator(object):
         self.iterator = iterator
         self.contract = contract
         self.value_emitter = ValueDeserializerEmitter(contract)
+        self.variable_manager = VariableManager(contract)
+
+    def _get_primary_key(self, model, data):
+        """hmm"""
+        return data[model._meta.pk.name]  # hmm
+
+    def _get_creation_args(self, model, data):
+        args = []
+        for name, value in data.items():
+            f = self.value_emitter.get_field(model, name)
+            if f.rel is None:
+                args.append("{}={!r}".format(name, self.value_emitter.convert_value(model, name, value)))
+            else:
+                args.append("{}={}".format(name, self.variable_manager.get_variable(f.rel.to, value)))
+        return args
+
+    def generate(self, m=None):
+        m = m or PythonModule()
+        for model, data in self.iterator:
+            pk = self._get_primary_key(model, data)
+            varname = self.variable_manager.generate_variable(model, pk)
+            args = self._get_creation_args(model, data)
+            self.contract.create_model(m, model, varname, args)
+        return m
+
+
+class OrderedIterator(object):
+    def __init__(self, iterator, model_map_provider):
+        self.objects = defaultdict(list)
+        self.iterator = iterator
+        self.model_map_provider = model_map_provider
 
     def __iter__(self):
-        pass
+        for model, data in self.iterator:
+            self.objects[model].append(data)
+        for model in self.model_map_provider.ordered_models:
+            for data in self.objects[model]:
+                yield model, data
 
 
 class ValueDeserializerEmitter(object):
@@ -27,6 +79,9 @@ class ValueDeserializerEmitter(object):
         self.fields = {}     # field-class-name -> field
         self.setup()
 
+    def get_field(self, model, fieldname):  # xxx:
+        return self.model_fields_map[model][fieldname]
+
     def setup(self):
         alias_from_field = self.contract.alias_from_field
         keyname_from_field = self.contract.keyname_from_field
@@ -34,18 +89,18 @@ class ValueDeserializerEmitter(object):
         for model in self.models:
             field_map = self.model_fields_map[model]
             for f in model._meta.local_fields:
+                field_map[f.name] = f
                 if f.rel is None:
                     name = keyname_from_field(f)
                     self.alias_map[name] = alias_from_field(f)
                     self.fields[name] = f.__class__
-                    field_map[f.name] = f
         self.contract.on_setup(self)
 
     def classname(self):
         return self.contract.deserializer_name()
 
-    def emit_class(self):
-        m = PythonModule()
+    def emit_class(self, m=None):
+        m = m or PythonModule()
         # import
         for name, fieldclass in self.fields.items():
             alias = self.alias_map[name]
@@ -59,9 +114,9 @@ class ValueDeserializerEmitter(object):
                 alias = self.alias_map[name]
                 if not isinstance(alias, eager):
                     m.stmt("{alias} = staticmethod({clsname}().to_python)".format(alias=alias, clsname=name))
-        return str(m)
+        return m
 
-    def emit_value(self, model, fieldname, value):
+    def convert_value(self, model, fieldname, value):
         contract = self.contract
         field = self.model_fields_map[model][fieldname]
         keyname = contract.keyname_from_field(field)
