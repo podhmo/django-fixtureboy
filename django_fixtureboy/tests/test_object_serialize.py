@@ -12,6 +12,9 @@ class Tests(unittest.TestCase):
         class Category(models.Model):
             name = models.CharField(max_length=255, null=False, default="")
 
+            class Meta:
+                app_label = __name__
+
         class Item(models.Model):
             category = models.ForeignKey(Category)
             name = models.CharField(max_length=255, null=False, default="")

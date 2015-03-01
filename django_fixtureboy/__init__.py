@@ -8,6 +8,7 @@ from .hookpoint import withhook, HasHookPointMeta
 from .hookpoint import clearall_hooks
 from .codegen import eager
 
+
 class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def __init__(self, base_factory=DjangoModelFactory):
         self.base_factory = base_factory
@@ -57,17 +58,28 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def finish(self, m):
         return str(m)
 
+    # for fixture loader
+    @withhook
+    def on_model_detected(self, model):
+        pass
+
+    def get_model(self, model_identifier):
+        from django.apps import apps
+        return apps.get_model(model_identifier)
+
     # for ValueDeserializer
     @withhook
-    def setup(self, emitter):
+    def on_setup(self, emitter):
         from django.db.models.fields import (
             AutoField,
             IntegerField,
-            CharField
+            CharField,
+            BooleanField
         )
         emitter.alias_map[AutoField.__name__] = eager(partial(AutoField.to_python, None))
         emitter.alias_map[IntegerField.__name__] = eager(partial(IntegerField.to_python, None))
         emitter.alias_map[CharField.__name__] = eager(partial(CharField.to_python, None))
+        emitter.alias_map[BooleanField.__name__] = eager(partial(BooleanField.to_python, None))
 
     def alias_from_field(self, f):
         return f.__class__.__name__.replace("Field", "").lower()

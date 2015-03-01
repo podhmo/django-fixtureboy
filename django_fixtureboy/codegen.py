@@ -41,7 +41,7 @@ class ValueDeserializerEmitter(object):
                     self.alias_map[name] = alias_from_field(f)
                     self.fields[name] = f.__class__
                     field_map[f.name] = f
-        self.contract.setup(self)
+        self.contract.on_setup(self)
 
     def classname(self):
         return self.contract.deserializer_name()

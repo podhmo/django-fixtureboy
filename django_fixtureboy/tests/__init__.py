@@ -9,3 +9,10 @@ settings.configure(
         "NAME": ":memory:"
     }}
 )
+
+settings.INSTALLED_APPS += (
+    'django.contrib.auth',
+)
+
+import django
+django.setup()

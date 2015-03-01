@@ -18,11 +18,20 @@ class Tests(CleanHookTestCase):
             active = models.BooleanField(choices=ONOFF)
             gender = models.CharField(max_length=1, choices=["f", "m"])
 
+            class Meta:
+                app_label = __name__
+
         class Permission(models.Model):
             name = models.CharField(max_length=255, null=False, default="")
 
+            class Meta:
+                app_label = __name__
+
         class Skill(models.Model):
             name = models.CharField(max_length=255, null=False, default="")
+
+            class Meta:
+                app_label = __name__
 
         class Member(models.Model):
             group = models.ForeignKey(Group)
@@ -30,9 +39,15 @@ class Tests(CleanHookTestCase):
             skill_set = models.ManyToManyField(Skill, through="MemberToSkill")
             name = models.CharField(max_length=255, null=False, default="")
 
+            class Meta:
+                app_label = __name__
+
         class MemberToSkill(models.Model):
             member = models.ForeignKey(Member)
             skill = models.ForeignKey(Skill)
+
+            class Meta:
+                app_label = __name__
 
         cls.Group = Group
         cls.Member = Member
