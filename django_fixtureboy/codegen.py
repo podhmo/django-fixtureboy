@@ -2,7 +2,7 @@
 import logging
 logger = logging.getLogger(__name__)
 from collections import defaultdict, namedtuple, Counter
-from srcgen.python import PythonModule
+from .langhelpers import PythonModule
 
 eager = namedtuple("eager", "fn")
 

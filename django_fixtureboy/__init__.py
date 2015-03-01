@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 from factory.django import DjangoModelFactory
-from srcgen.python import PythonModule
+from .langhelpers import PythonModule
 from django.apps import apps
 from collections import namedtuple
 from functools import partial
@@ -107,7 +107,9 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def create_model(self, m, model, varname, args):
         # TODO: add import sentence
         factory_name = self.name(model)
-        m.stmt("{} = {}({})".format(varname, factory_name, ", ".join(args)))
+        with m.call("{} = {}".format(varname, factory_name)) as r:
+            for arg in args:
+                r.append(arg)
         return m
 
 CodeParts = namedtuple("CodeParts", "lib name model bases attrs")  # xxx
