@@ -65,7 +65,6 @@ class CodeGenerator(object):
         self.value_emitter.emit_class(m)
 
         m.sep()
-
         for model, data in self.iterator:
             pk = self._get_primary_key(model, data)
             varname = self.variable_manager.generate_variable(model, pk)
@@ -80,9 +79,10 @@ class OrderedIterator(object):
         self.iterator = iterator
         self.model_map_provider = model_map_provider
 
-    def __iter__(self):
         for model, data in self.iterator:
             self.objects[model].append(data)
+
+    def __iter__(self):
         for model in self.model_map_provider.ordered_models:
             for data in self.objects[model]:
                 yield model, data

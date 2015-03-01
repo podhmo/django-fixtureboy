@@ -62,6 +62,10 @@ class HookPoint(object):
             logger.debug("move hooks: name=%s, dummy -> cls=%s", self.name, cls)
             self.hooks[cls].extend(val)
 
+    def apply_copy(self, src, dst):
+        val = self.hooks.get(src, [])
+        self.hooks[dst].extend(val[:])
+
 
 class HookPointFactory(object):
     def __init__(self):
@@ -85,6 +89,10 @@ clearall_hooks = withhook.clearall
 class HasHookPointMeta(type):
     def __new__(self, name, bases, attrs):
         cls = super(HasHookPointMeta, self).__new__(self, name, bases, attrs)
+        for c in bases:
+            for k, v in cls.__dict__.items():
+                if isinstance(v, HookPoint):
+                    v.apply_copy(c, cls)
         for k, v in attrs.items():
             if isinstance(v, HookPoint):
                 v.apply_dummy(cls)

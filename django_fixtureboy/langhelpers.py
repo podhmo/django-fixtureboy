@@ -10,6 +10,6 @@ class PythonModule(Module):
         yield r
         args = ", ".join(r)
         if limit < len(args):
-            self.stmt("{}({})", name, ",\n    ".join(r))
+            self.stmt("{}({})", name, "\n    " + ",\n    ".join(r))
         else:
             self.stmt("{}({})", name, args)

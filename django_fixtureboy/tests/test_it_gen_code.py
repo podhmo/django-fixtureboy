@@ -1,8 +1,9 @@
 # -*- coding:utf-8 -*-
-import unittest
 from django_fixtureboy.testing import CleanHookTestCase
+from evilunit import test_target
 
 
+@test_target("django_fixtureboy:Application")
 class Tests(CleanHookTestCase):
     @classmethod
     def setUpClass(cls):
@@ -53,36 +54,38 @@ class Tests(CleanHookTestCase):
         m1 = self.Member(name="RW", group=g, birth=date(1990, 1, 1))
         m1.save()
 
-        from django_fixtureboy import Contract
-        from django_fixtureboy.fixtureloader import ObjectListToDictIterator
-        from django_fixtureboy.codegen import CodeGenerator, OrderedIterator
-        from django_mindscape import Walker, ModelMapProvider
-        Contract.args.add_hook("django_fixtureboy.hooks:args_add_modelutils_choices_hook")
-        Contract.finish.add_hook("django_fixtureboy.hooks:finish_add_autopep8_hook")
         from django_fixtureboy.hooks import BuildDataOmmitingHook
-        Contract.on_build_data.add_hook(BuildDataOmmitingHook("ctime"))
+        from django_fixtureboy import get_provider
 
-        provider = ModelMapProvider(Walker([self.Member]))
-        contract = Contract(provider.ordered_models)
-        iterator = ObjectListToDictIterator([m0, m1, g], contract)
-        codegen = CodeGenerator(OrderedIterator(iterator, provider), contract)
-        result = str(codegen.generate())
+        class settings:
+            FIXTUREBOY_CONTRACT_SETTINGS = {
+                "args": [
+                    "django_fixtureboy.hooks:args_add_modelutils_choices_hook"
+                ],
+                "on_build_data": [
+                    BuildDataOmmitingHook("ctime")
+                ]
+            }
+
+        provider = get_provider(models=[self.Member])
+        app = self._makeOne(provider, settings)
+        with app.object_code_generator([m0, m1, g]) as codegen:
+            result = str(codegen.generate())
+
         # TODO: tidy test
-        print(result)
         expected = """
 from factory.django import DjangoModelFactory
-from django.db.models.fields import DateField
+from django_fixtureboy.tests.test_it_gen_code import Member
+from django_fixtureboy.tests.test_it_gen_code import Group
 from django.db.models.fields import DateTimeField
-
+from django.db.models.fields import DateField
 
 class DD(object):
-    date = staticmethod(DateField().to_python)
     datetime = staticmethod(DateTimeField().to_python)
+    date = staticmethod(DateField().to_python)
 
 group0 = GroupFactory(id=1, name='G', color=Group.COLOR_LIST.r)
-member0 = MemberFactory(
-    id=1, group=group0, name='HP', birth=DD.date('1990-01-01'))
-member1 = MemberFactory(
-    id=2, group=group0, name='RW', birth=DD.date('1990-01-01'))
+member0 = MemberFactory(id=1, group=group0, name='HP', birth=DD.date('1990-01-01'))
+member1 = MemberFactory(id=2, group=group0, name='RW', birth=DD.date('1990-01-01'))
 """
         self.assertEqual(expected.strip(), result.strip())

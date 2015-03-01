@@ -1,11 +1,13 @@
 # -*- coding:utf-8 -*-
+import logging
+logger = logging.getLogger(__name__)
 from factory.django import DjangoModelFactory
-from .langhelpers import PythonModule
-from django.apps import apps
 from collections import namedtuple
+import contextlib
 from functools import partial
-from .hookpoint import withhook, HasHookPointMeta
-from .hookpoint import clearall_hooks
+from django.utils.functional import cached_property
+from django.core.exceptions import ImproperlyConfigured
+from .hookpoint import withhook, HasHookPointMeta, clearall_hooks
 from .codegen import eager
 from .structure import OrderedSet
 
@@ -115,39 +117,61 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
 CodeParts = namedtuple("CodeParts", "lib name model bases attrs")  # xxx
 
 
-class FactoryEmitter(object):
-    def __init__(self, models=None, contract_factory=None, base_factory=DjangoModelFactory):
-        self.models = models or apps.get_models()
-        self.contract_factory = contract_factory or Contract
-        self.base_factory = base_factory
-        self.contract = self.contract_factory(self.models, self.base_factory)
-        self.parts = [self.contract.initial_parts]
+def get_provider(models=None, brain=None):
+    from django_mindscape import ModelMapProvider, Walker, Brain
+    from django.apps import apps
+    models = models or apps.get_models()
+    return ModelMapProvider(Walker(models, brain=brain or Brain()))
 
-    def collect_parts(self):
-        for m in self.models:
-            self.parts.append(self.contract.parts(m))
 
-    def emit(self):
-        self.collect_parts()
-        m = PythonModule()
+class Application(object):
+    def __init__(self, provider, settings, key="FIXTUREBOY_CONTRACT_SETTINGS"):
+        self.provider = provider  # provider is django_mindscape.ModelMapProvider
+        self.settings = settings
+        self.key = key
 
-        for parts in self.parts:
-            for import_sentence in parts.lib:
-                m.stmt(import_sentence)
-        m.sep()
+    @cached_property
+    def contract(self):
+        try:
+            options = getattr(self.settings, self.key)
+            return self.construct_contract_from_options(options)
+        except AttributeError:
+            raise ImproperlyConfigured("please adding settings.{}".format(self.key))
 
-        for parts in self.parts:
-            if parts.name is None:
+    def construct_contract_from_options(self, options):
+        class _Contract(Contract):
+            pass
+        for name, hooks in options.items():
+            if not hasattr(_Contract, name):
+                logger.info("Contract.%s is not found. ignored.", name)
                 continue
-            with m.class_(parts.name, bases=parts.bases):
-                for attr in parts.attrs:
-                    if callable(attr):
-                        attr(m)
-                    else:
-                        m.stmt(attr)
+            for hook in hooks:
+                getattr(_Contract, name).add_hook(hook)
+        return _Contract(self.provider.ordered_models)
 
-                m.sep()
+    @contextlib.contextmanager
+    def factory_generator(self):
+        from .factorygen import FactoryGenerator
+        yield FactoryGenerator(self.contract)
 
-                self.contract.gen_meta(m, parts)
-                m.sep()
-        return self.contract.finish(m)
+    @contextlib.contextmanager
+    def xml_code_generator(self, xml):
+        from .fixtureloader import XMLToDictIterator
+        from .codegen import OrderedIterator, CodeGenerator
+        with open(xml) as rf:
+            iterator = OrderedIterator(XMLToDictIterator(rf, self.contract), self.provider)
+            yield CodeGenerator(iterator, self.contract)
+
+    @contextlib.contextmanager
+    def object_code_generator(self, objlist):
+        from .fixtureloader import ObjectListToDictIterator
+        from .codegen import OrderedIterator, CodeGenerator
+        iterator = OrderedIterator(ObjectListToDictIterator(objlist, self.contract), self.provider)
+        yield CodeGenerator(iterator, self.contract)
+
+
+__all__ = [
+    "clearall_hooks",
+    "withhook",
+    "Contract"
+]
