@@ -28,7 +28,7 @@ class Tests(unittest.TestCase):
     def test_it(self):
         from django_fixtureboy import Contract
         from django.contrib.auth.models import User
-        contract = Contract()
+        contract = Contract([User])
 
         target = self._makeOne(self.fixture, contract)
         result = list(target)

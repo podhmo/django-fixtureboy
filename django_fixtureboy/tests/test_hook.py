@@ -6,7 +6,7 @@ from evilunit import test_target
 @test_target("django_fixtureboy:Contract")
 class Tests(CleanHookTestCase):
     def test_nohook(self):
-        contract = self._makeOne()
+        contract = self._makeOne([])
 
         class Model:
             pass
@@ -22,7 +22,7 @@ class Tests(CleanHookTestCase):
             self.assertEqual(self.contract, contract)
             return "_" + gen()
 
-        self.contract = self._makeOne()
+        self.contract = self._makeOne([])
 
         class Model:
             pass
@@ -63,7 +63,7 @@ class Tests(CleanHookTestCase):
             L.append("a3")
             return result
 
-        self.contract = self._makeOne()
+        self.contract = self._makeOne([])
 
         class Model:
             pass
@@ -94,7 +94,7 @@ class Tests(CleanHookTestCase):
                 L.append("wrap1")
                 return "Foo"
 
-        contract = MyContract()
+        contract = MyContract([])
 
         class Model:
             pass

@@ -9,19 +9,19 @@ eager = namedtuple("eager", "fn")
 
 class CodeGenerator(object):
     """温かみのある手書きのコード"""
-    def __init__(self, iterator, contract, value_emitter):
+    def __init__(self, iterator, contract):
         self.iterator = iterator
         self.contract = contract
-        self.value_emitter = value_emitter
+        self.value_emitter = ValueDeserializerEmitter(contract)
 
     def __iter__(self):
         pass
 
 
 class ValueDeserializerEmitter(object):
-    def __init__(self, models, contract):
+    def __init__(self, contract):
         self.contract = contract
-        self.models = models
+        self.models = contract.models
         self.model_fields_map = defaultdict(dict)  # model -> dict(fieldname -> field)
         self.alias_map = {}  # field-class-name -> methodname or eager(fn)
         self.fields = {}     # field-class-name -> field

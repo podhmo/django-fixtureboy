@@ -10,7 +10,8 @@ from .codegen import eager
 
 
 class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
-    def __init__(self, base_factory=DjangoModelFactory):
+    def __init__(self, models, base_factory=DjangoModelFactory):
+        self.models = models
         self.base_factory = base_factory
         self.initial_parts = CodeParts(
             lib=set([self.build_import_sentence(base_factory)]),
@@ -98,7 +99,7 @@ class FactoryEmitter(object):
         self.models = models or apps.get_models()
         self.contract_factory = contract_factory or Contract
         self.base_factory = base_factory
-        self.contract = self.contract_factory(self.base_factory)
+        self.contract = self.contract_factory(self.models, self.base_factory)
         self.parts = [self.contract.initial_parts]
 
     def collect_parts(self):

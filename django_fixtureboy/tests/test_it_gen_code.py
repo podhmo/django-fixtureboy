@@ -51,9 +51,9 @@ class Tests(unittest.TestCase):
 
         from django_fixtureboy import Contract
         from django_fixtureboy.fixtureloader import ObjectListToDictIterator
-        iterator = ObjectListToDictIterator([m0, m1, g], Contract())
+        from django_fixtureboy.codegen import CodeGenerator
+        from django_mindscape import Walker, ModelMapProvider
+        provider = ModelMapProvider(Walker([self.Member]))
+        iterator = ObjectListToDictIterator([m0, m1, g], Contract(provider.ordered_models))
 
-        # todo: 必要な要素だけ集める
-        # from django_mindscape import Walker, ModelMapProvider
-        # provider = ModelMapProvider(Walker([self.Member]))
 

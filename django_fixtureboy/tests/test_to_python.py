@@ -23,8 +23,8 @@ class Tests(CleanHookTestCase):
 
     def _makeOne(self, models):
         from django_fixtureboy import Contract
-        contract = Contract()
-        return self._getTarget()(models, contract)
+        contract = Contract(models)
+        return self._getTarget()(contract)
 
     def test_it_class_definition(self):
         import datetime
