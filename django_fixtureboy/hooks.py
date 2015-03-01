@@ -42,7 +42,7 @@ def attrs_add_many_to_many_post_generation_hook(contract, gen, model):
 
 class _ChoicesInfoDetector(object):
     name_map = defaultdict(dict)  # model -> field.name -> choice_name
-    reverse_identifier_map = defaultdict(dict)  # model -> value -> identifier
+    reverse_map = defaultdict(dict)  # model -> value -> identifier
 
     @classmethod
     def choice_name(cls, model, field):
@@ -63,13 +63,14 @@ class _ChoicesInfoDetector(object):
 
     @classmethod
     def choice_attr(cls, model, field, value):
-        r = cls.reverse_identifier_map[model].get(value)
-        if r is not None:
-            return r
+        submap = cls.reverse_map[model].get(field.name)
+        if submap is not None:
+            return submap[value]
         identifier_map = field.choices._identifier_map
-        D = cls.reverse_identifier_map[model] = {v: k for k, v in identifier_map.items()}
+        submap = {v: k for k, v in identifier_map.items()}
+        cls.reverse_map[model][field.name] = submap
         try:
-            return D[value]
+            return submap[value]
         except KeyError:
             logger.warn("KeyError: model=%s, field=%s, value=%s", model, field, value)
             return field.choices._triples[0][1]

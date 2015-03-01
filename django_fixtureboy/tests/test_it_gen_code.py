@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from django_fixtureboy.testing import CleanHookTestCase
 from evilunit import test_target
+import unittest
 
 
 @test_target("django_fixtureboy:Application")
@@ -45,6 +46,7 @@ class Tests(CleanHookTestCase):
         create_table(Group)
         create_table(Permission)
 
+    @unittest.skip("@")
     def test_it(self):
         from datetime import date
         g = self.Group(id=1, name="G", color=self.Group.COLOR_LIST.r)
