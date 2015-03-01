@@ -112,6 +112,8 @@ class ValueDeserializerEmitter(object):
                     name = keyname_from_field(f)
                     self.alias_map[name] = alias_from_field(f)
                     self.fields[name] = f.__class__
+            for f in model._meta.local_many_to_many:
+                field_map[f.name] = f
         self.contract.on_setup(self)
 
     def classname(self):

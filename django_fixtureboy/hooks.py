@@ -1,4 +1,6 @@
 # -*- coding:utf-8 -*-
+import logging
+logger = logging.getLogger(__name__)
 from factory import SubFactory, post_generation
 from django.db.models.fields import NOT_PROVIDED
 from functools import partial
@@ -66,7 +68,11 @@ class _ChoicesInfoDetector(object):
             return r
         identifier_map = field.choices._identifier_map
         D = cls.reverse_identifier_map[model] = {v: k for k, v in identifier_map.items()}
-        return D[value]
+        try:
+            return D[value]
+        except KeyError:
+            logger.warn("KeyError: model=%s, field=%s, value=%s", model, field, value)
+            return field.choices._triples[0][1]
 
 
 def args_add_modelutils_choices_hook(contract, gen, model, field, value):
