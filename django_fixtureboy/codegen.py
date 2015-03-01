@@ -133,6 +133,6 @@ class ValueDeserializerEmitter(object):
         keyname = contract.keyname_from_field(field)
         alias = self.alias_map[keyname]
         if isinstance(alias, eager):
-            return "{}".format(alias.fn(value))
+            return self.contract.args(model, field, alias.fn(value))
         else:
             return ReprWrapper("{}.{}({!r})".format(self.classname(), alias, value))

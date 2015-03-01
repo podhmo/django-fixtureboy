@@ -95,6 +95,10 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def varname(self, model, i):
         return "{}{}".format(model.__name__.lower(), i)
 
+    @withhook
+    def args(self, model, field, value):
+        return value
+
     def create_model(self, m, model, varname, args):
         # TODO: add import sentence
         factory_name = self.name(model)

@@ -1,8 +1,9 @@
 # -*- coding:utf-8 -*-
 from factory import SubFactory, post_generation
 from django.db.models.fields import NOT_PROVIDED
-from .codegen import eager
 from functools import partial
+from collections import defaultdict
+from .codegen import eager, ReprWrapper
 
 
 def attrs_add_subfactory_hook(contract, gen, model):
@@ -37,14 +38,43 @@ def attrs_add_many_to_many_post_generation_hook(contract, gen, model):
     return attrs
 
 
-def _detect_choice_name(model, field, choices):
-    choice_name = getattr(model, field.name, None)
-    if choice_name is not None:
-        return choice_name
-    for k, v in model.__dict__.items():
-        if v == choices:
-            return k
-    return None
+class _ChoicesInfoDetector(object):
+    name_map = defaultdict(dict)  # model -> field.name -> choice_name
+    reverse_identifier_map = defaultdict(dict)  # model -> value -> identifier
+
+    @classmethod
+    def choice_name(cls, model, field):
+        r = cls.name_map[model].get(field.name)
+        if r is not None:
+            return r
+
+        gueesing = field.name.upper()
+        choice_name = getattr(model, gueesing, None)
+        if choice_name is not None:
+            cls.name_map[model][field.name] = gueesing
+            return choice_name
+        for name, attr in model.__dict__.items():
+            if attr == field.choices:
+                cls.name_map[model][field.name] = name
+                return name
+        return None
+
+    @classmethod
+    def choice_attr(cls, model, field, value):
+        r = cls.reverse_identifier_map[model].get(value)
+        if r is not None:
+            return r
+        identifier_map = field.choices._identifier_map
+        D = cls.reverse_identifier_map[model] = {v: k for k, v in identifier_map.items()}
+        return D[value]
+
+
+def args_add_modelutils_choices_hook(contract, gen, model, field, value):
+    choicename = _ChoicesInfoDetector.choice_name(model, field)
+    if choicename is None:
+        return value
+    attrname = _ChoicesInfoDetector.choice_attr(model, field, value)
+    return ReprWrapper("{}.{}.{}".format(model.__name__, choicename, attrname))
 
 
 def attrs_add_modelutils_choices_hook(contract, gen, model):
@@ -62,7 +92,7 @@ def attrs_add_modelutils_choices_hook(contract, gen, model):
     for f in model._meta.local_fields:
         if f.choices:
             if isinstance(f.choices, Choices):
-                choice_name = _detect_choice_name(model, f, f.choices)
+                choice_name = _ChoicesInfoDetector.choice_name(model, f)
                 if choice_name is not None:
                     value, attrname, label = f.choices._triples[0]
                     kwargs = {"name": f.name,

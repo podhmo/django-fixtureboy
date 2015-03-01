@@ -52,7 +52,7 @@ class Tests(CleanHookTestCase):
         emitter = self._makeOne(models)
 
         code = emitter.convert_value(self.Item, "price", "200")
-        self.assertEqual(code, "200")
+        self.assertEqual(code, 200)
 
     def test_it_use_method__json(self):
         models = [self.Item]
