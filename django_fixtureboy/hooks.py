@@ -62,18 +62,22 @@ class _ChoicesInfoDetector(object):
         return None
 
     @classmethod
-    def choice_attr(cls, model, field, value):
-        submap = cls.reverse_map[model].get(field.name)
-        if submap is not None:
-            return submap[value]
-        identifier_map = field.choices._identifier_map
-        submap = {v: k for k, v in identifier_map.items()}
-        cls.reverse_map[model][field.name] = submap
+    def _get_from_submap(cls, submap, model, field, value):
         try:
             return submap[value]
         except KeyError:
             logger.warn("KeyError: model=%s, field=%s, value=%s", model, field, value)
             return field.choices._triples[0][1]
+
+    @classmethod
+    def choice_attr(cls, model, field, value):
+        submap = cls.reverse_map[model].get(field.name)
+        if submap is not None:
+            return cls._get_from_submap(submap, model, field, value)
+        identifier_map = field.choices._identifier_map
+        submap = {v: k for k, v in identifier_map.items()}
+        cls.reverse_map[model][field.name] = submap
+        return cls._get_from_submap(submap, model, field, value)
 
 
 def args_add_modelutils_choices_hook(contract, gen, model, field, value):

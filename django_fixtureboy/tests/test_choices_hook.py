@@ -41,6 +41,13 @@ class Tests(unittest.TestCase):
         result = self._callFUT(contract, gen, self.model, field, "0")
         self.assertEqual(str(result), "model.EN_LIST.yes")
 
+    def test_en__missing_value(self):
+        contract = None
+        gen = lambda: ""
+        field = [f for f in self.model._meta.fields if f.name == "en"][0]
+        result = self._callFUT(contract, gen, self.model, field, "")
+        self.assertEqual(str(result), "model.EN_LIST.yes")
+
     def test_flag(self):
         contract = None
         gen = lambda: 0
@@ -61,4 +68,3 @@ class Tests(unittest.TestCase):
         field = [f for f in self.model._meta.fields if f.name == "flag3"][0]
         result = self._callFUT(contract, gen, self.model, field, 0)
         self.assertEqual(result, 0)
-
