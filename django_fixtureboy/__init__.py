@@ -8,7 +8,7 @@ from .hookpoint import withhook, HasHookPointMeta
 from .hookpoint import clearall_hooks
 from .codegen import eager
 
-class DefaultContract(HasHookPointMeta("_BaseHookPoint", (), {})):
+class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def __init__(self, base_factory=DjangoModelFactory):
         self.base_factory = base_factory
         self.initial_parts = CodeParts(
@@ -84,7 +84,7 @@ CodeParts = namedtuple("CodeParts", "lib name model bases attrs")  # xxx
 class FactoryEmitter(object):
     def __init__(self, models=None, contract_factory=None, base_factory=DjangoModelFactory):
         self.models = models or apps.get_models()
-        self.contract_factory = contract_factory or DefaultContract
+        self.contract_factory = contract_factory or Contract
         self.base_factory = base_factory
         self.contract = self.contract_factory(self.base_factory)
         self.parts = [self.contract.initial_parts]

@@ -41,11 +41,11 @@ class Tests(CleanHookTestCase):
         return [self.Member, self.Group]
 
     def test_it(self):
-        from django_fixtureboy import DefaultContract
-        DefaultContract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_subfactory_hook")
-        DefaultContract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_modelutils_choices_hook")
-        DefaultContract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_many_to_many_post_generation_hook")
-        DefaultContract.finish.add_hook("django_fixtureboy.hooks:finish_add_autopep8_hook")
-        emitter = self._makeOne(self._get_models(), DefaultContract)
+        from django_fixtureboy import Contract
+        Contract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_subfactory_hook")
+        Contract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_modelutils_choices_hook")
+        Contract.attrs.add_hook("django_fixtureboy.hooks:attrs_add_many_to_many_post_generation_hook")
+        Contract.finish.add_hook("django_fixtureboy.hooks:finish_add_autopep8_hook")
+        emitter = self._makeOne(self._get_models(), Contract)
         result = emitter.emit()
         print(result)

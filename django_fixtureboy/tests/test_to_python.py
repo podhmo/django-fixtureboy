@@ -22,8 +22,8 @@ class Tests(CleanHookTestCase):
         cls.Item = Item
 
     def _makeOne(self, models):
-        from django_fixtureboy import DefaultContract
-        contract = DefaultContract()
+        from django_fixtureboy import Contract
+        contract = Contract()
         return self._getTarget()(models, contract)
 
     def test_it_class_definition(self):
@@ -62,8 +62,8 @@ class Tests(CleanHookTestCase):
         self.assertRegex(code, "{}.json(.+)".format(emitter.classname()))
 
     def test_it_use_method__json__with_hook(self):
-        from django_fixtureboy import DefaultContract
-        DefaultContract.setup.add_hook("django_fixtureboy.hooks:setup_add_jsonfield_hook")
+        from django_fixtureboy import Contract
+        Contract.setup.add_hook("django_fixtureboy.hooks:setup_add_jsonfield_hook")
         models = [self.Item]
         emitter = self._makeOne(models)
 

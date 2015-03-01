@@ -3,7 +3,7 @@ from django_fixtureboy.testing import CleanHookTestCase
 from evilunit import test_target
 
 
-@test_target("django_fixtureboy:DefaultContract")
+@test_target("django_fixtureboy:Contract")
 class Tests(CleanHookTestCase):
     def test_nohook(self):
         contract = self._makeOne()
