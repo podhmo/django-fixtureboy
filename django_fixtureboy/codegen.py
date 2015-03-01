@@ -7,6 +7,17 @@ from srcgen.python import PythonModule
 eager = namedtuple("eager", "fn")
 
 
+class CodeGenerator(object):
+    """温かみのある手書きのコード"""
+    def __init__(self, iterator, contract, value_emitter):
+        self.iterator = iterator
+        self.contract = contract
+        self.value_emitter = value_emitter
+
+    def __iter__(self):
+        pass
+
+
 class ValueDeserializerEmitter(object):
     def __init__(self, models, contract):
         self.contract = contract
@@ -33,7 +44,7 @@ class ValueDeserializerEmitter(object):
     def classname(self):
         return self.contract.deserializer_name()
 
-    def emit_class_definition(self):
+    def emit_class(self):
         m = PythonModule()
         # import
         for name, fieldclass in self.fields.items():
@@ -50,7 +61,7 @@ class ValueDeserializerEmitter(object):
                     m.stmt("{alias} = staticmethod({clsname}().to_python)".format(alias=alias, clsname=name))
         return str(m)
 
-    def emit_method_call(self, model, fieldname, value):
+    def emit_value(self, model, fieldname, value):
         contract = self.contract
         field = self.model_fields_map[model][fieldname]
         keyname = contract.keyname_from_field(field)

@@ -31,7 +31,7 @@ class Tests(CleanHookTestCase):
         models = [self.Item]
         emitter = self._makeOne(models)
 
-        code = emitter.emit_class_definition()
+        code = emitter.emit_class()
 
         env = {}
         exec(code, env)
@@ -44,21 +44,21 @@ class Tests(CleanHookTestCase):
         models = [self.Item]
         emitter = self._makeOne(models)
 
-        code = emitter.emit_method_call(self.Item, "pull_date", "2014-10-30T14:49:57.460464")
+        code = emitter.emit_value(self.Item, "pull_date", "2014-10-30T14:49:57.460464")
         self.assertRegex(code, "{}.datetime\('2014-.+64'\)".format(emitter.classname()))
 
     def test_it_use_method__integer(self):
         models = [self.Item]
         emitter = self._makeOne(models)
 
-        code = emitter.emit_method_call(self.Item, "price", "200")
+        code = emitter.emit_value(self.Item, "price", "200")
         self.assertEqual(code, "200")
 
     def test_it_use_method__json(self):
         models = [self.Item]
         emitter = self._makeOne(models)
 
-        code = emitter.emit_method_call(self.Item, "memo", '{"description": "healing?"}')
+        code = emitter.emit_value(self.Item, "memo", '{"description": "healing?"}')
         self.assertRegex(code, "{}.json(.+)".format(emitter.classname()))
 
     def test_it_use_method__json__with_hook(self):
@@ -67,5 +67,5 @@ class Tests(CleanHookTestCase):
         models = [self.Item]
         emitter = self._makeOne(models)
 
-        code = emitter.emit_method_call(self.Item, "memo", '{"description": "healing?"}')
+        code = emitter.emit_value(self.Item, "memo", '{"description": "healing?"}')
         self.assertEqual(code, '{"description": "healing?"}')

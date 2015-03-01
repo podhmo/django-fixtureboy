@@ -3,7 +3,7 @@ from evilunit import test_target
 import unittest
 
 
-@test_target("django_fixtureboy.fixtureloader:FixtureDataIterator")
+@test_target("django_fixtureboy.fixtureloader:XMLToDictIterator")
 class Tests(unittest.TestCase):
     fixture = """\
 <?xml version="1.0" encoding="utf-8"?>
@@ -27,11 +27,10 @@ class Tests(unittest.TestCase):
 
     def test_it(self):
         from django_fixtureboy import Contract
-        from django_fixtureboy.fixtureloader import XMLToDictHandler
         from django.contrib.auth.models import User
         contract = Contract()
 
-        target = self._makeOne(self.fixture, contract, XMLToDictHandler)
+        target = self._makeOne(self.fixture, contract)
         result = list(target)
 
         self.assertEqual(len(result), 1)

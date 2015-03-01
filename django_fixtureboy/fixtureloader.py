@@ -20,26 +20,26 @@ class ObjectSerializer(object):
         return D
 
 
-class ObjectListToDictHandler(object):
+class ObjectListToDictIterator(object):
     def __init__(self, objlist, contract):
         self.objlist = objlist
         self.contract = contract
-        self.current_model = None  # hmm
         self.serializer = ObjectSerializer()
 
     def __iter__(self):
         for obj in self.objlist:
             Model = self.current_model = obj.__class__
             self.contract.on_model_detected(Model)
-            yield self.serializer.serialize(obj)
+            yield (Model, self.serializer.serialize(obj))
 
 
-class XMLToDictHandler(object):
-    def __init__(self, stream, contract):
-        self.stream = stream
+class XMLToDictIterator(object):
+    def __init__(self, stream_or_string, contract):
+        if not hasattr(stream_or_string, "read"):
+            stream_or_string = StringIO(stream_or_string)
+        self.stream = stream_or_string
         self.contract = contract
-        self.event_stream = pulldom.parse(stream, DefusedExpatParser())
-        self.current_model = None  # hmm
+        self.event_stream = pulldom.parse(self.stream, DefusedExpatParser())
 
     def __iter__(self):
         return self
@@ -52,7 +52,7 @@ class XMLToDictHandler(object):
         raise StopIteration
 
     def handle_object(self, node):
-        self.current_model = Model = self._get_model_from_node(node, "model")
+        Model = self._get_model_from_node(node, "model")
         self.contract.on_model_detected(Model)
         data = {}
         if node.hasAttribute('pk'):
@@ -68,21 +68,8 @@ class XMLToDictHandler(object):
             else:
                 value = getInnerText(field_node).strip()
             data[field_name] = value
-        return data
+        return Model, data
 
     def _get_model_from_node(self, node, attr):
         model_identifier = node.getAttribute(attr)
         return self.contract.get_model(model_identifier)
-
-
-class FixtureDataIterator(object):
-    # todo: supprot zip .etc
-    def __init__(self, stream_or_string, contract, handler_factory=XMLToDictHandler):
-        if not hasattr(stream_or_string, "read"):
-            stream_or_string = StringIO(stream_or_string)
-        self.contract = contract
-        self.handler = handler_factory(stream_or_string, contract)
-
-    def __iter__(self):
-        for datum in self.handler:
-            yield (self.handler.current_model, datum)
