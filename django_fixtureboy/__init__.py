@@ -3,9 +3,10 @@ from factory.django import DjangoModelFactory
 from srcgen.python import PythonModule
 from django.apps import apps
 from collections import namedtuple
+from functools import partial
 from .hookpoint import withhook, HasHookPointMeta
 from .hookpoint import clearall_hooks
-
+from .codegen import eager
 
 class DefaultContract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def __init__(self, base_factory=DjangoModelFactory):
@@ -57,6 +58,17 @@ class DefaultContract(HasHookPointMeta("_BaseHookPoint", (), {})):
         return str(m)
 
     # for ValueDeserializer
+    @withhook
+    def setup(self, emitter):
+        from django.db.models.fields import (
+            AutoField,
+            IntegerField,
+            CharField
+        )
+        emitter.alias_map[AutoField.__name__] = eager(partial(AutoField.to_python, None))
+        emitter.alias_map[IntegerField.__name__] = eager(partial(IntegerField.to_python, None))
+        emitter.alias_map[CharField.__name__] = eager(partial(CharField.to_python, None))
+
     def alias_from_field(self, f):
         return f.__class__.__name__.replace("Field", "").lower()
 

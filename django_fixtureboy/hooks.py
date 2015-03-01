@@ -1,6 +1,8 @@
 # -*- coding:utf-8 -*-
 from factory import SubFactory, post_generation
 from django.db.models.fields import NOT_PROVIDED
+from .codegen import eager
+from functools import partial
 
 
 def attrs_add_subfactory_hook(contract, gen, model):
@@ -88,3 +90,9 @@ def finish_add_autopep8_hook(contract, gen, m):
     from autopep8 import fix_code
     code = gen()
     return fix_code(code, encoding="utf-8")
+
+
+# codegen
+def setup_add_jsonfield_hook(contract, gen, emitter):
+    from jsonfield import JSONField
+    emitter.alias_map[JSONField.__name__] = eager(partial(JSONField.to_python, None))

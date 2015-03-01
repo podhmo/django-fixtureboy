@@ -1,8 +1,10 @@
 # -*- coding:utf-8 -*-
 import logging
 logger = logging.getLogger(__name__)
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from srcgen.python import PythonModule
+
+eager = namedtuple("eager", "fn")
 
 
 class ObjectSerializer(object):
@@ -23,7 +25,7 @@ class ValueDeserializerEmitter(object):
         self.contract = contract
         self.models = models
         self.model_fields_map = defaultdict(dict)  # model -> dict(fieldname -> field)
-        self.alias_map = {}  # field-class-name -> methodname
+        self.alias_map = {}  # field-class-name -> methodname or eager(fn)
         self.fields = {}     # field-class-name -> field
         self.setup()
 
@@ -39,6 +41,7 @@ class ValueDeserializerEmitter(object):
                     self.alias_map[name] = alias_from_field(f)
                     self.fields[name] = f.__class__
                     field_map[f.name] = f
+        self.contract.setup(self)
 
     def classname(self):
         return self.contract.deserializer_name()
@@ -46,15 +49,18 @@ class ValueDeserializerEmitter(object):
     def emit_class_definition(self):
         m = PythonModule()
         # import
-        for fieldclass in self.fields.values():
-            m.stmt(self.contract.build_import_sentence(fieldclass))
+        for name, fieldclass in self.fields.items():
+            alias = self.alias_map[name]
+            if not isinstance(alias, eager):
+                m.stmt(self.contract.build_import_sentence(fieldclass))
 
         m.sep()
 
         with m.class_(self.classname()):
             for name in self.fields.keys():
                 alias = self.alias_map[name]
-                m.stmt("{alias} = staticmethod({clsname}().to_python)".format(alias=alias, clsname=name))
+                if not isinstance(alias, eager):
+                    m.stmt("{alias} = staticmethod({clsname}().to_python)".format(alias=alias, clsname=name))
         return str(m)
 
     def emit_method_call(self, model, fieldname, value):
@@ -62,4 +68,7 @@ class ValueDeserializerEmitter(object):
         field = self.model_fields_map[model][fieldname]
         keyname = contract.keyname_from_field(field)
         alias = self.alias_map[keyname]
-        return "{}.{}({!r})".format(self.classname(), alias, value)
+        if isinstance(alias, eager):
+            return "{}".format(alias.fn(value))
+        else:
+            return "{}.{}({!r})".format(self.classname(), alias, value)
