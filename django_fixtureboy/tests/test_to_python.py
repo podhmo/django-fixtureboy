@@ -21,8 +21,7 @@ class Tests(unittest.TestCase):
 
     def _makeOne(self, models):
         from django_fixtureboy import DefaultContract
-        provider = None
-        contract = DefaultContract(provider)
+        contract = DefaultContract()
         return self._getTarget()(models, contract)
 
     def test_it_class_definition(self):

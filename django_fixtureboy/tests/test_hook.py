@@ -5,10 +5,6 @@ from evilunit import test_target
 
 @test_target("django_fixtureboy:DefaultContract")
 class Tests(CleanHookTestCase):
-    def _makeOne(self):
-        provider = object()
-        return self._getTarget()(provider)
-
     def test_nohook(self):
         contract = self._makeOne()
 
@@ -98,8 +94,7 @@ class Tests(CleanHookTestCase):
                 L.append("wrap1")
                 return "Foo"
 
-        provider = object()
-        contract = MyContract(provider)
+        contract = MyContract()
 
         class Model:
             pass

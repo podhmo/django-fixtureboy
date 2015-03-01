@@ -2,16 +2,13 @@
 from factory.django import DjangoModelFactory
 from srcgen.python import PythonModule
 from django.apps import apps
-from django.utils.functional import cached_property
-from django_mindscape import ModelMapProvider, Walker, Brain
 from collections import namedtuple
 from .hookpoint import withhook, HasHookPointMeta
 from .hookpoint import clearall_hooks
 
 
 class DefaultContract(HasHookPointMeta("_BaseHookPoint", (), {})):
-    def __init__(self, model_map_provider, base_factory=DjangoModelFactory):
-        self.provider = model_map_provider
+    def __init__(self, base_factory=DjangoModelFactory):
         self.base_factory = base_factory
         self.initial_parts = CodeParts(
             lib=set([self.build_import_sentence(base_factory)]),
@@ -23,14 +20,6 @@ class DefaultContract(HasHookPointMeta("_BaseHookPoint", (), {})):
 
     def build_import_sentence(self, x):
         return "from {} import {}".format(x.__module__, x.__name__)
-
-    @property
-    def brain(self):
-        return self.provider.brain
-
-    @property
-    def models(self):
-        return self.provider.ordered_models
 
     @withhook
     def name(self, model):
@@ -81,19 +70,15 @@ CodeParts = namedtuple("CodeParts", "lib name model bases attrs")  # xxx
 
 
 class FactoryEmitter(object):
-    @cached_property
-    def model_map_provider(self):
-        return ModelMapProvider(Walker(self.models, Brain()))
-
     def __init__(self, models=None, contract_factory=None, base_factory=DjangoModelFactory):
         self.models = models or apps.get_models()
         self.contract_factory = contract_factory or DefaultContract
         self.base_factory = base_factory
-        self.contract = self.contract_factory(self.model_map_provider, self.base_factory)
+        self.contract = self.contract_factory(self.base_factory)
         self.parts = [self.contract.initial_parts]
 
     def collect_parts(self):
-        for m in self.contract.models:
+        for m in self.models:
             self.parts.append(self.contract.parts(m))
 
     def emit(self):
