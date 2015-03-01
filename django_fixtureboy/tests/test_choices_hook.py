@@ -43,7 +43,22 @@ class Tests(unittest.TestCase):
 
     def test_flag(self):
         contract = None
-        gen = lambda: "0"
+        gen = lambda: 0
         field = [f for f in self.model._meta.fields if f.name == "flag"][0]
-        result = self._callFUT(contract, gen, self.model, field, "0")
-        self.assertEqual(str(result), "0")
+        result = self._callFUT(contract, gen, self.model, field, 0)
+        self.assertEqual(result, 0)
+
+    def test_flag2(self):
+        contract = None
+        gen = lambda: 0
+        field = [f for f in self.model._meta.fields if f.name == "flag2"][0]
+        result = self._callFUT(contract, gen, self.model, field, 0)
+        self.assertEqual(result, 0)
+
+    def test_flag3(self):
+        contract = None
+        gen = lambda: 0
+        field = [f for f in self.model._meta.fields if f.name == "flag3"][0]
+        result = self._callFUT(contract, gen, self.model, field, 0)
+        self.assertEqual(result, 0)
+
