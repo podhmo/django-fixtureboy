@@ -9,6 +9,7 @@ from .hookpoint import clearall_hooks
 from .codegen import eager
 from .structure import OrderedSet
 
+
 class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def __init__(self, models, base_factory=DjangoModelFactory):
         self.models = models

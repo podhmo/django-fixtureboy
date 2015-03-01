@@ -49,10 +49,10 @@ class _ChoicesInfoDetector(object):
             return r
 
         gueesing = field.name.upper()
-        choice_name = getattr(model, gueesing, None)
-        if choice_name is not None:
+        choice_candidates = getattr(model, gueesing, None)
+        if choice_candidates == field.choices:
             cls.name_map[model][field.name] = gueesing
-            return choice_name
+            return gueesing
         for name, attr in model.__dict__.items():
             if attr == field.choices:
                 cls.name_map[model][field.name] = name
@@ -70,9 +70,12 @@ class _ChoicesInfoDetector(object):
 
 
 def args_add_modelutils_choices_hook(contract, gen, model, field, value):
+    from model_utils import Choices
     value = gen()
     choicename = _ChoicesInfoDetector.choice_name(model, field)
     if choicename is None:
+        return value
+    if not isinstance(field.choices, Choices):
         return value
     attrname = _ChoicesInfoDetector.choice_attr(model, field, value)
     return ReprWrapper("{}.{}.{}".format(model.__name__, choicename, attrname))
