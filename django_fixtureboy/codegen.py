@@ -7,19 +7,6 @@ from srcgen.python import PythonModule
 eager = namedtuple("eager", "fn")
 
 
-class ObjectSerializer(object):
-    def emit(self, obj):
-        model = obj._meta.concrete_model
-        D = {}
-        for field in model._meta.local_fields:
-            if field.serialize:
-                if field.rel is None:
-                    D[field.name] = field.value_to_string(obj)
-                else:
-                    D[field.name] = field.value_to_string(obj)  # xxx
-        return D
-
-
 class ValueDeserializerEmitter(object):
     def __init__(self, models, contract):
         self.contract = contract

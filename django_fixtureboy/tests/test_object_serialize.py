@@ -3,7 +3,7 @@ import unittest
 from evilunit import test_target
 
 
-@test_target("django_fixtureboy.codegen:ObjectSerializer")
+@test_target("django_fixtureboy.fixtureloader:ObjectSerializer")
 class Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -30,6 +30,6 @@ class Tests(unittest.TestCase):
         from datetime import datetime
         item = self.Item(category_id=1, name="portion", price=200, pull_date=datetime(2000, 1, 1))
         target = self._makeOne()
-        result = target.emit(item)
+        result = target.serialize(item)
         expected = {'category': '1', 'price': '200', 'name': 'portion', 'pull_date': '2000-01-01T00:00:00'}
         self.assertEqual(result, expected)
