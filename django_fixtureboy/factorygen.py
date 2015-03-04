@@ -16,8 +16,8 @@ class FactoryGenerator(object):
         m = m or PythonModule()
 
         for parts in self.parts:
-            for import_sentence in parts.lib:
-                m.stmt(import_sentence)
+            for target in parts.lib:
+                m.from_(target.__module__, target.__name__)
         m.sep()
 
         for parts in self.parts:

@@ -1,3 +1,6 @@
 # -*- coding:utf-8 -*-
-from prestring.python import PythonModule
-__all__ = ["PythonModule"]
+from functools import partial
+from prestring.python import PythonModule as _PythonModule
+
+
+PythonModule = partial(_PythonModule, width=80)

@@ -32,7 +32,11 @@ class VariableManager(object):
         return varname
 
     def get_variable(self, model, pk):
-        return self.variables[model].get(pk)
+        var = self.variables[model].get(pk)
+        if var is None:
+            return None
+        else:
+            return "self.{}".format(var)
 
 
 class CodeGenerator(object):
@@ -59,17 +63,28 @@ class CodeGenerator(object):
 
     def generate(self, m=None):
         m = m or PythonModule()
-        for import_sentence in self.contract.initial_parts.lib:
-            m.stmt(import_sentence)
+        import_area = m.submodule("# create fixture data")
+
+        for target in self.contract.initial_parts.lib:
+            import_area.from_(target.__module__, target.__name__)
 
         self.value_emitter.emit_class(m)
 
-        m.sep()
-        for model, data in self.iterator:
-            pk = self._get_primary_key(model, data)
-            varname = self.variable_manager.generate_variable(model, pk)
-            args = self._get_creation_args(model, data)
-            self.contract.create_model(m, model, varname, args)
+        with m.class_("TestContextData"):
+            with m.method("__call__"):
+                method_calls = m.submodule()
+
+            for model, datalist in self.iterator:
+                if not datalist:
+                    continue
+                methodname = "create_{}_context".format(model.__name__.lower())
+                with m.method(methodname):
+                    for data in datalist:
+                        pk = self._get_primary_key(model, data)
+                        varname = self.variable_manager.generate_variable(model, pk)
+                        args = self._get_creation_args(model, data)
+                        self.contract.create_model(m, model, varname, args)
+                method_calls.stmt("self.{}()".format(methodname))
         return self.contract.finish(m)
 
 
@@ -84,8 +99,7 @@ class OrderedIterator(object):
 
     def __iter__(self):
         for model in self.model_map_provider.ordered_models:
-            for data in self.objects[model]:
-                yield model, data
+            yield model, self.objects[model]
 
 
 class ValueDeserializerEmitter(object):
@@ -125,7 +139,7 @@ class ValueDeserializerEmitter(object):
         for name, fieldclass in self.fields.items():
             alias = self.alias_map[name]
             if not isinstance(alias, eager):
-                m.stmt(self.contract.build_import_sentence(fieldclass))
+                m.from_(fieldclass.__module__, fieldclass.__name__)
 
         m.sep()
 

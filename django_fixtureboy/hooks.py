@@ -10,8 +10,8 @@ from .codegen import eager, ReprWrapper
 
 def attrs_add_subfactory_hook(contract, gen, model):
     attrs = gen()
-    contract.initial_parts.lib.add(contract.build_import_sentence(SubFactory))
-    # contract.initial_parts.lib.add(contract.build_import_sentence(RelatedFactoy))
+    contract.initial_parts.lib.add(SubFactory)
+    # contract.initial_parts.lib.add(RelatedFactoy)
 
     for f in model._meta.local_fields:
         if f.rel is not None:
@@ -24,7 +24,7 @@ def attrs_add_many_to_many_post_generation_hook(contract, gen, model):
     attrs = gen()
     if not model._meta.local_many_to_many:
         return attrs
-    contract.initial_parts.lib.add(contract.build_import_sentence(post_generation))
+    contract.initial_parts.lib.add(post_generation)
 
     for f in model._meta.local_many_to_many:
         def generate_code_with_srcgen(m, f=f):
@@ -154,3 +154,16 @@ class BuildDataOmmitingHook(object):
         for k in self.keys:
             data.pop(k, None)
         return data
+
+
+def build_data_omitting_same_as_default(constract, gen, model, _):
+    data = gen()
+    for f in model._meta.local_fields:
+        if f.default is NOT_PROVIDED:
+            continue
+        if f.rel is not None:
+            continue
+        if callable(f.default):
+            continue
+        if f.name in data and str(data[f.name]) == str(f.default):
+            data.pop(f.name)

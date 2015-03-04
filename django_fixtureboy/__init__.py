@@ -17,15 +17,12 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
         self.models = models
         self.base_factory = base_factory
         self.initial_parts = CodeParts(
-            lib=OrderedSet([self.build_import_sentence(base_factory)]),
+            lib=OrderedSet([base_factory]),
             name=None,
             model=None,
             bases=None,
             attrs=[]
         )
-
-    def build_import_sentence(self, x):
-        return "from {} import {}".format(x.__module__, x.__name__)
 
     @withhook
     def name(self, model):
@@ -41,7 +38,7 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
 
     @withhook
     def lib(self, model):
-        return [self.build_import_sentence(model)]
+        return [model]
 
     @withhook
     def parts(self, model):
@@ -65,7 +62,7 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     # for fixture loader
     @withhook
     def on_model_detected(self, model):
-        self.initial_parts.lib.add(self.build_import_sentence(model))
+        self.initial_parts.lib.add(model)
 
     @withhook
     def on_build_data(self, model, data):
@@ -82,12 +79,14 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
             AutoField,
             IntegerField,
             CharField,
-            BooleanField
+            BooleanField,
+            SmallIntegerField
         )
         emitter.alias_map[AutoField.__name__] = eager(partial(AutoField.to_python, None))
         emitter.alias_map[IntegerField.__name__] = eager(partial(IntegerField.to_python, None))
         emitter.alias_map[CharField.__name__] = eager(partial(CharField.to_python, None))
         emitter.alias_map[BooleanField.__name__] = eager(partial(BooleanField.to_python, None))
+        emitter.alias_map[SmallIntegerField.__name__] = eager(partial(SmallIntegerField.to_python, None))
 
     def alias_from_field(self, f):
         return f.__class__.__name__.replace("Field", "").lower()
@@ -109,7 +108,7 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def create_model(self, m, model, varname, args):
         # TODO: add import sentence
         factory_name = self.name(model)
-        m.call("{} = {}".format(varname, factory_name), *args)
+        m.call("self.{} = {}".format(varname, factory_name), *args)
         return m
 
 CodeParts = namedtuple("CodeParts", "lib name model bases attrs")  # xxx
