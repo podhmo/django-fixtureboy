@@ -18,7 +18,7 @@ except IOError:
 install_requires = [
     'django-mindscape',
     'factory_boy',
-    'srcgen',
+    'prestring',
 ]
 
 full_extras = [

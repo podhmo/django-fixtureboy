@@ -109,9 +109,7 @@ class Contract(HasHookPointMeta("_BaseHookPoint", (), {})):
     def create_model(self, m, model, varname, args):
         # TODO: add import sentence
         factory_name = self.name(model)
-        with m.call("{} = {}".format(varname, factory_name)) as r:
-            for arg in args:
-                r.append(arg)
+        m.call("{} = {}".format(varname, factory_name), *args)
         return m
 
 CodeParts = namedtuple("CodeParts", "lib name model bases attrs")  # xxx
