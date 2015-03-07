@@ -19,11 +19,13 @@ class Tests(unittest.TestCase):
             JA_LIST = Choices(("0", "hai", u"はい"), ("1", "oo", u"おお"))
             EN_LIST = Choices(("0", "yes", u"yes"), ("1", "hmm", u"hmm"))
             FLAG = Choices((0, "off"), (1, "on"))
+            FLAG2 = Choices(("0", "off"), ("0", "on"))
             ja = models.CharField(choices=JA_LIST)
             en = models.CharField(choices=EN_LIST)
             flag = models.SmallIntegerField(choices=FLAG)
             flag2 = models.SmallIntegerField(choices=Choices((0, "off"), (1, "on")))
             flag3 = models.SmallIntegerField(choices=((0, "off"), (1, "on")))
+            flag4 = models.SmallIntegerField(choices=FLAG2)
 
         cls.model = model
 
@@ -68,3 +70,10 @@ class Tests(unittest.TestCase):
         field = [f for f in self.model._meta.fields if f.name == "flag3"][0]
         result = self._callFUT(contract, gen, self.model, field, 0)
         self.assertEqual(result, 0)
+
+    def test_flag4(self):
+        contract = None
+        gen = lambda: "9"
+        field = [f for f in self.model._meta.fields if f.name == "flag4"][0]
+        result = self._callFUT(contract, gen, self.model, field, "9")
+        self.assertEqual(result, "0")
