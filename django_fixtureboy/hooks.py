@@ -40,6 +40,10 @@ def attrs_add_many_to_many_post_generation_hook(contract, gen, model):
     return attrs
 
 
+class _ChoiceIdentifierNotfound(Exception):
+    pass
+
+
 class _ChoicesInfoDetector(object):
     name_map = defaultdict(dict)  # model -> field.name -> choice_name
     reverse_map = defaultdict(dict)  # model -> value -> identifier
@@ -67,7 +71,11 @@ class _ChoicesInfoDetector(object):
             return submap[value]
         except KeyError:
             logger.warn("KeyError: model=%s, field=%s, value=%s", model, field, value)
-            return field.choices._triples[0][1]
+            triple = field.choices._triples[0]
+            if triple[1] == triple[0]:  # (value,  doc)
+                raise _ChoiceIdentifierNotfound(triple[0])
+            else:  # (value, identifier, doc)
+                return triple[1]
 
     @classmethod
     def choice_attr(cls, model, field, value):
@@ -88,7 +96,11 @@ def args_add_modelutils_choices_hook(contract, gen, model, field, value):
         return value
     if not isinstance(field.choices, Choices):
         return value
-    attrname = _ChoicesInfoDetector.choice_attr(model, field, value)
+    try:
+        attrname = _ChoicesInfoDetector.choice_attr(model, field, value)
+    except _ChoiceIdentifierNotfound as e:
+        return e.args[0]
+
     if str(attrname) == str(value):
         return value
     return ReprWrapper("{}.{}.{}".format(model.__name__, choicename, attrname))
